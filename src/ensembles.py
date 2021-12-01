@@ -16,6 +16,10 @@ class RandomForestMSE:
         feature_subsample_size : float
             The size of feature set for each tree. If None then use one-third of all features.
         """
+        self.n_estimators = n_estimators
+        self.max_depth = max_depth
+        self.feature_subsample_size = feature_subsample_size
+        self.trees_parameters = trees_parameters
 
     def fit(self, X, y, X_val=None, y_val=None):
         """
@@ -28,6 +32,17 @@ class RandomForestMSE:
         y_val : numpy ndarray
             Array of size n_val_objects
         """
+        if self.feature_subsample_size is None:
+            self.feature_subsample_size = np.floor(X.shape[1] / 3)
+        self.algorithms = []
+        for i in range(self.n_estimators):
+            idx = np.random.randint(X.shape[0], size=X.shape[0])
+            rgr = DecisionTreeRegressor(max_depth=self.max_depth, max_features=self.feature_subsample_size, **self.trees_parameters) 
+            model.fit(X[idx], y[idx])
+            self.algorithms.append(model)
+        if X_val is not None and y_val is not None:
+            val_pred = [model.predict(X_val) for model in self.algorithms]
+            return ((y_val - np.mean(val_pred)) ** 2).mean()
 
     def predict(self, X):
         """
@@ -38,7 +53,8 @@ class RandomForestMSE:
         y : numpy ndarray
             Array of size n_objects
         """
-
+        ans = [model.predict(X) for model in self.algorithms]
+        return np.mean(ans)
 
 class GradientBoostingMSE:
     def __init__(
@@ -55,6 +71,14 @@ class GradientBoostingMSE:
         feature_subsample_size : float
             The size of feature set for each tree. If None then use one-third of all features.
         """
+        self.n_estimators = n_estimators
+        self.learning_rate = learning_rate
+        self.max_depth = max_depth
+        self.feature_subsample_size = feature_subsample_size
+        self.trees_parameters = trees_parameters
+
+    def MSE(coef, y, pred, new_pred):
+        return ((y - pred - coef * new_pred) ** 2).mean()
 
     def fit(self, X, y, X_val=None, y_val=None):
         """
@@ -63,6 +87,25 @@ class GradientBoostingMSE:
         y : numpy ndarray
             Array of size n_objects
         """
+        if self.feature_subsample_size is None:
+            self.feature_subsample_size = np.floor(X.shape[1] / 3)
+        self.algorithms = []
+        self.coef = []
+        pred = np.zeros(X.shape[0])
+
+        for i in range(self.n_estimators):
+            model = DecisionTreeRegressor(max_depth=self.max_depth, max_features=self.feature_subsample_size, **self.trees_parameters)
+            model.fit(X, y - pred)
+            new_pred = model.predict(X)
+            self.coef.append(minimize_scalar(MSE, args=(y, pred, new_pred)).x)
+            pred += self.learning_rate * self.coef[-1] * new_pred
+            self.algorithms.append(model)
+        if X_val is not None and y_val is not None:
+            val_ans = np.zeros(X_val.shape[0])
+            for i in range(self.n_estimators):
+                val_ans += self.learning_rate * self.coef[i] * self.algorithms[i].predict(X_val)
+            return ((y_val - val_ans) ** 2).mean()
+
 
     def predict(self, X):
         """
@@ -73,3 +116,7 @@ class GradientBoostingMSE:
         y : numpy ndarray
             Array of size n_objects
         """
+        ans = np.zeros(X.shape[0])
+        for i in range(self.n_estimators):
+            ans += self.learning_rate * self.coef[i] * self.algorithms[i].predict(X)
+        return ans
