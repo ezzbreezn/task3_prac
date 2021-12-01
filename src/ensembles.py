@@ -21,7 +21,7 @@ class RandomForestMSE:
         self.feature_subsample_size = feature_subsample_size
         self.trees_parameters = trees_parameters
 
-    def fit(self, X, y, X_val=None, y_val=None):
+    def fit(self, X, y, X_val=None, y_val=None, return_train_loss=False):
         """
         X : numpy ndarray
             Array of size n_objects, n_features
@@ -35,15 +35,27 @@ class RandomForestMSE:
         if self.feature_subsample_size is None:
             self.feature_subsample_size = np.floor(X.shape[1] / 3)
         self.algorithms = []
-
+        if return_train_loss is True:
+            train_loss = []
+        if X_val is not None and y_val is not None:
+            val_loss = []
         for i in range(self.n_estimators):
             idx = np.random.randint(X.shape[0], size=X.shape[0])
             rgr = DecisionTreeRegressor(max_depth=self.max_depth, max_features=self.feature_subsample_size, **self.trees_parameters) 
             model.fit(X[idx], y[idx])
             self.algorithms.append(model)
-        if X_val is not None and y_val is not None:
-            val_pred = [model.predict(X_val) for model in self.algorithms]
-            return ((y_val - np.mean(val_pred)) ** 2).mean()
+            if return_train_loss is True:
+                train_pred = np.mean([m.predict(X) for m in self.algorithms], axis=0)
+                train_loss.append(((y - train_pred) ** 2).mean())
+            if X_val is not None and y_val is not None:
+                val_pred = np.mean([m.predict(X_val) for m in self.algorithms], axis=0)
+                val_loss.append(((y_val - val_pred) ** 2).mean())
+        if X_val is not None and y_val is not None and return_train_loss is True:
+            return train_loss, val_loss
+        elif X_val is not None and y_val is not None:
+            return val_loss
+        elif train_loss is True:
+            return train_loss
 
 
     def predict(self, X):
@@ -84,7 +96,7 @@ class GradientBoostingMSE:
         return ((y - pred - coef * new_pred) ** 2).mean()
 
 
-    def fit(self, X, y, X_val=None, y_val=None):
+    def fit(self, X, y, X_val=None, y_val=None, return_train_loss=False):
         """
         X : numpy ndarray
             Array of size n_objects, n_features
@@ -97,6 +109,11 @@ class GradientBoostingMSE:
         self.algorithms = []
         self.coef = []
         pred = np.zeros(X.shape[0])
+        if return_train_loss is True:
+            train_loss = []
+        if X_val is not None and y_val is not None:
+            val_loss = []
+            val_pred = np.zeros(X_val.shape[0])
 
         for i in range(self.n_estimators):
             model = DecisionTreeRegressor(max_depth=self.max_depth, max_features=self.feature_subsample_size, **self.trees_parameters)
@@ -105,12 +122,18 @@ class GradientBoostingMSE:
             self.coef.append(minimize_scalar(MSE, args=(y, pred, new_pred)).x)
             pred += self.learning_rate * self.coef[-1] * new_pred
             self.algorithms.append(model)
-        if X_val is not None and y_val is not None:
-            val_ans = np.zeros(X_val.shape[0])
-            for i in range(self.n_estimators):
-                val_ans += self.learning_rate * self.coef[i] * self.algorithms[i].predict(X_val)
-            return ((y_val - val_ans) ** 2).mean()
-
+            if return_train_loss is True:
+                train_loss.append(((y - pred) ** 2).mean())
+            if X_val is not None and y_val is not None:
+                new_val_pred = model.predict(X_val)
+                val_pred += self.learning_rate * self.coef[-1] * new_val_pred
+                val_loss.append(((y_val - val_pred) ** 2).mean())
+        if X_val is not None and y_val is not None and return_train_loss is True:
+            return train_loss, val_loss
+        elif X_val is not None and y_val is not None:
+            return val_loss
+        elif return_train_loss is True:
+            return train_loss
 
 
     def predict(self, X):
