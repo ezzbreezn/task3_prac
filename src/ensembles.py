@@ -33,7 +33,7 @@ class RandomForestMSE:
             Array of size n_val_objects
         """
         if self.feature_subsample_size is None:
-            self.feature_subsample_size = np.floor(X.shape[1] / 3)
+            self.feature_subsample_size = X.shape[1] // 3
         self.algorithms = []
         if return_train_loss is True:
             train_loss = []
@@ -104,7 +104,7 @@ class GradientBoostingMSE:
             Array of size n_objects
         """
         if self.feature_subsample_size is None:
-            self.feature_subsample_size = np.floor(X.shape[1] / 3)
+            self.feature_subsample_size = X.shape[1] // 3
 
         self.algorithms = []
         self.coef = []
