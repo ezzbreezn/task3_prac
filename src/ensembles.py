@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.optimize import minimize_scalar
 from sklearn.tree import DecisionTreeRegressor
-
+import time
 
 class RandomForestMSE:
     def __init__(
@@ -35,6 +35,7 @@ class RandomForestMSE:
         if self.feature_subsample_size is None:
             self.feature_subsample_size = X.shape[1] // 3
         self.algorithms = []
+        times = []
         if return_train_loss is True:
             train_loss = []
         if X_val is not None and y_val is not None:
@@ -42,7 +43,10 @@ class RandomForestMSE:
         for i in range(self.n_estimators):
             idx = np.random.randint(X.shape[0], size=X.shape[0])
             model = DecisionTreeRegressor(max_depth=self.max_depth, max_features=self.feature_subsample_size, **self.trees_parameters) 
+            start = time.time()
             model.fit(X[idx], y[idx])
+            end = time.time() - start
+            times.append(end)
             self.algorithms.append(model)
             if return_train_loss is True:
                 train_pred = np.mean([m.predict(X) for m in self.algorithms], axis=0)
@@ -51,11 +55,11 @@ class RandomForestMSE:
                 val_pred = np.mean([m.predict(X_val) for m in self.algorithms], axis=0)
                 val_loss.append(((y_val - val_pred) ** 2).mean())
         if X_val is not None and y_val is not None and return_train_loss is True:
-            return np.sqrt(train_loss), np.sqrt(val_loss)
+            return np.sqrt(train_loss), np.sqrt(val_loss), np.cumsum(times)
         elif X_val is not None and y_val is not None:
-            return np.sqrt(val_loss)
+            return np.sqrt(val_loss), np.cumsum(times)
         elif train_loss is True:
-            return np.sqrt(train_loss)
+            return np.sqrt(train_loss), np.cumsum(times)
 
 
     def predict(self, X):
@@ -108,6 +112,7 @@ class GradientBoostingMSE:
 
         self.algorithms = []
         self.coef = []
+        times = []
         pred = np.zeros(X.shape[0])
         if return_train_loss is True:
             train_loss = []
@@ -117,7 +122,10 @@ class GradientBoostingMSE:
 
         for i in range(self.n_estimators):
             model = DecisionTreeRegressor(max_depth=self.max_depth, max_features=self.feature_subsample_size, **self.trees_parameters)
+            start = time.time()
             model.fit(X, y - pred)
+            end = time.time() - start
+            times.append(end)
             new_pred = model.predict(X)
             self.coef.append(minimize_scalar(RMSE, args=(y, pred, new_pred)).x)
             pred += self.learning_rate * self.coef[-1] * new_pred
@@ -129,11 +137,11 @@ class GradientBoostingMSE:
                 val_pred += self.learning_rate * self.coef[-1] * new_val_pred
                 val_loss.append(((y_val - val_pred) ** 2).mean())
         if X_val is not None and y_val is not None and return_train_loss is True:
-            return np.sqrt(train_loss), np.sqrt(val_loss)
+            return np.sqrt(train_loss), np.sqrt(val_loss), np.cumsum(times)
         elif X_val is not None and y_val is not None:
-            return np.sqrt(val_loss)
+            return np.sqrt(val_loss), np.cumsum(times)
         elif return_train_loss is True:
-            return np.sqrt(train_loss)
+            return np.sqrt(train_loss), np.cumsum(times)
 
 
     def predict(self, X):
