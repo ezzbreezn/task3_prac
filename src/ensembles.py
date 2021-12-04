@@ -41,7 +41,7 @@ class RandomForestMSE:
             val_loss = []
         for i in range(self.n_estimators):
             idx = np.random.randint(X.shape[0], size=X.shape[0])
-            rgr = DecisionTreeRegressor(max_depth=self.max_depth, max_features=self.feature_subsample_size, **self.trees_parameters) 
+            model = DecisionTreeRegressor(max_depth=self.max_depth, max_features=self.feature_subsample_size, **self.trees_parameters) 
             model.fit(X[idx], y[idx])
             self.algorithms.append(model)
             if return_train_loss is True:
