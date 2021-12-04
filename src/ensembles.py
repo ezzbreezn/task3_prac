@@ -51,11 +51,11 @@ class RandomForestMSE:
                 val_pred = np.mean([m.predict(X_val) for m in self.algorithms], axis=0)
                 val_loss.append(((y_val - val_pred) ** 2).mean())
         if X_val is not None and y_val is not None and return_train_loss is True:
-            return train_loss, val_loss
+            return np.sqrt(train_loss), np.sqrt(val_loss)
         elif X_val is not None and y_val is not None:
-            return val_loss
+            return np.sqrt(val_loss)
         elif train_loss is True:
-            return train_loss
+            return np.sqrt(train_loss)
 
 
     def predict(self, X):
@@ -92,8 +92,8 @@ class GradientBoostingMSE:
         self.feature_subsample_size = feature_subsample_size
         self.trees_parameters = trees_parameters
 
-    def MSE(coef, y, pred, new_pred):
-        return ((y - pred - coef * new_pred) ** 2).mean()
+    def RMSE(coef, y, pred, new_pred):
+        return np.sqrt(((y - pred - coef * new_pred) ** 2).mean())
 
 
     def fit(self, X, y, X_val=None, y_val=None, return_train_loss=False):
@@ -119,7 +119,7 @@ class GradientBoostingMSE:
             model = DecisionTreeRegressor(max_depth=self.max_depth, max_features=self.feature_subsample_size, **self.trees_parameters)
             model.fit(X, y - pred)
             new_pred = model.predict(X)
-            self.coef.append(minimize_scalar(MSE, args=(y, pred, new_pred)).x)
+            self.coef.append(minimize_scalar(RMSE, args=(y, pred, new_pred)).x)
             pred += self.learning_rate * self.coef[-1] * new_pred
             self.algorithms.append(model)
             if return_train_loss is True:
@@ -129,11 +129,11 @@ class GradientBoostingMSE:
                 val_pred += self.learning_rate * self.coef[-1] * new_val_pred
                 val_loss.append(((y_val - val_pred) ** 2).mean())
         if X_val is not None and y_val is not None and return_train_loss is True:
-            return train_loss, val_loss
+            return np.sqrt(train_loss), np.sqrt(val_loss)
         elif X_val is not None and y_val is not None:
-            return val_loss
+            return np.sqrt(val_loss)
         elif return_train_loss is True:
-            return train_loss
+            return np.sqrt(train_loss)
 
 
     def predict(self, X):
