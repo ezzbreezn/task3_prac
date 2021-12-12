@@ -1,0 +1,16 @@
+{% extends "main.html" %}
+
+{% block title %}Ансамбли алгоритмов. Веб сервер{% endblock %}
+
+
+{% block content %}
+<center>
+    <h1>Ансамбли алгоритмов. Веб сервер</h1>
+
+
+<button onclick="window.location.href = {{ url_for('get_data') }};">Загрузка данных</button> 
+&nbsp;
+&nbsp;
+<button onclick="window.location.href = {{ url_for('get_models') }};">Выбор модели</button>
+</center> 
+{% endblock %}
