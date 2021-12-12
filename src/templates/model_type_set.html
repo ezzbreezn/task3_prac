@@ -6,7 +6,7 @@
 <center>
 <h1>Выбор модели</h1>
 <p>Для выбора доступны алгоритмы случайный лес и градиентный бустинг</p>
-<form method='POST' action={{ url_for('get_models') }}>
+<form method='POST' action={{ url_for('model_start_page') }}>
     <div class='field'>
         {{ form.name.label }}
         {{ form.name(size=20) }}
