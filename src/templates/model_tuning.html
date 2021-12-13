@@ -1,0 +1,56 @@
+{% extends "main.html" %}
+
+{% block title %}Задание параметров модели{% endblock %}
+
+{% block content %}
+<style>
+.button {
+  background-color: #94b0d1;
+  text-align: center;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  display: inline-block;
+  font-size: 15px;
+  padding: 8px 8px;
+}
+</style>
+
+
+
+<center>
+<h1>Выбор гиперпараметров для модели {{ name }}</h1>
+</center>
+<h4>Выбранный тип модели — {{ ('случайный лес' if (model_type == 'RF') else 'градиентный бустинг')}}</h4>
+
+<h3>Укажите гиперпараметры:</h3>
+<form method='POST' action={{ url_for('model_tuning', name=name) }}>
+        <div class='field'>
+            {{ form.n_estimators.label }}
+            {{ form.n_estimators(size=20) }}
+        </div>
+        {%- if model_type == 'GB' -%}
+        <div class='field'>
+            {{ form.learning_rate.label }}
+            {{ form.learning_rate(size=20) }}
+        </div>
+        {%- endif %}
+        <div class='field'>
+            {{ form.max_depth.label }}
+            {{ form.max_depth(size=20) }}
+        </div>
+        <div class='field'>
+            {{ form.feature_subsample_size.label }}
+            {{ form.feature_subsample_size(size=20) }}
+        </div>
+        <p>Опционально можно задать дополнительные параметры для каждого дерева (sklearn.tree.DecisionTreeRegressor) в формате JSON (в виде словаря)</p>
+        <div class='field'>
+            {{ form.trees_parameters.label }}
+            {{ form.trees_parameters(size=20) }}
+        </div>
+        <input type="submit" value="Сохранить модель" class="button">
+</form>
+
+<br>
+<a href="{{ url_for('model_start_page') }}"><button class="button">Назад</button></a>
+{% endblock %}
