@@ -1,0 +1,83 @@
+{% extends "main.html" %}
+
+{% block title %} {{ model.name }} {% endblock %}
+
+{% block content %}
+<style>
+.button {
+    background-color: #94b0d1;
+    text-align: center;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    display: inline-block;
+    font-size: 15px;
+    padding: 8px 8px;
+}
+.flexbox {
+    display: flex;
+}
+</style>
+
+<center>
+<h1>Модель {{ model.name }}</h1>
+
+    <h3>Параметры модели</h3>
+    <div style="text-align: center;">
+    <div style="display: inline-block;">{{ model.description.to_html(index=False, justify='center') | safe }}</div> 
+    </div>
+    <br>
+    {% if model.param_flag %}
+        <p>Дополнительные параметры для деревьев</p>
+
+        <div style="text-align: center;">
+            <div style="display: inline-block;">{{ model.add_content.to_html(index=False, justify='center') | safe }}</div> 
+        </div>
+
+    {% endif %}
+    <br>
+    <div>
+    {% if model.fitted %}
+        <h3>
+        График функции потерь в процессе обучения
+        </h3>
+        <img src={{ url_for('plot', name=model.name) }} width=50%>
+        <p><b>Лучшее значение RMSE на обучающей выборке: {{ model.best_train_loss }}</b></p> 
+        {% if model.val_loss %}
+            <p><b>Лучшее значение RMSE на валидационной выборке: {{ model.best_val_loss }}</b></p>
+        {% endif %}
+        <p><b>Время обучения: {{ model.learning_time }} с</b></p>
+        <p>Модель успешно обучена, можно делать прогнозы. Предсказания является csv файлом, его можно просмотреть и скачать.<br/>
+        <a href={{ url_for('get_data') }} style="text-decoration: none;">Загрузить</a> тестовую выборку
+        </p>
+        <form method='POST' action={{ url_for('model_page', name=model.name) }}>
+            <div class='field'>
+                {{ predict_form.test_data.label }}
+                {{ predict_form.test_data() }}
+            </div>
+            <input type="submit" value="Предсказать" class="button">
+        </form>
+    {% else %}
+        <p>Модель еще не обучена, необходимо ее настроить<br/>
+        Если данные для обучения еще не загружены, требуется их <a href={{ url_for('get_data') }} style="text-decoration: none;">загрузить</a>.</p>
+
+        <form method='POST' action={{ url_for('model_page', name=model.name) }}>
+        <div class='field'>
+            {{ fit_form.train_data.label }}
+            {{ fit_form.train_data() }}
+        </div>
+        <div class='field'>
+            {{ fit_form.val_data.label }}
+            {{ fit_form.val_data() }}
+        </div>
+        <input type="submit" value="Обучить модель" class="button">
+        </form>
+
+    {% endif %}
+    </div>
+
+<br>
+
+<button onclick="window.location.href = {{ url_for('model_start_page') }};" class="button">Назад</button>
+</center>
+{% endblock %}

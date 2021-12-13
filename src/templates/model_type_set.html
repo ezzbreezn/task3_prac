@@ -1,0 +1,51 @@
+{% extends "main.html" %}
+
+{% block title %}Выбор модели{% endblock %}
+
+{% block content %}
+<style>
+.button {
+  background-color: #94b0d1;
+  text-align: center;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  display: inline-block;
+  font-size: 15px;
+  padding: 8px 8px;
+}
+</style>
+
+
+
+<center>
+<h1>Выбор модели</h1>
+<p>Для выбора доступны алгоритмы случайный лес и градиентный бустинг</p>
+<form method='POST' action={{ url_for('model_start_page') }}>
+    <div class='field'>
+        {{ form.name.label }}
+        {{ form.name(size=20) }}
+    </div>
+    <div class='field'>
+        {{ form.model_type.label }}
+        {{ form.model_type() }}
+    </div>
+    <br>
+    <input type="submit" value="Продолжить" class="button">
+</form>
+  
+<h3>Готовые к использованию модели:</h3>
+<ul>
+    {% if not models %}
+        <p>Нет созданных моделей</p>
+    {% else %}
+        {% for name in models: %}
+            <li><a href={{ url_for('model_page', name=name) }} style="text-decoration: none;">{{ name }}</a></li>
+        {% endfor %}
+    {% endif %}
+</ul>
+
+<br>
+<a href="{{ url_for('get_index') }}"><button class="button">На главную</button></a>
+</center>
+{% endblock %}
