@@ -59,7 +59,7 @@
 
     sudo docker run -p 5000:5000 -i model
 
-Ссылка на образ: [](https://hub.docker.com/r/ezzbreezn/model)
+[Ссылка на образ](https://hub.docker.com/r/ezzbreezn/model)
 
 ## Эксперименты и отчет о практическом задании
 
