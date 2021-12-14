@@ -1,4 +1,4 @@
 #!/bin/bash
 
-sudo docker build -t ezzbreezn/app .
+sudo docker build -t ezzbreezn/model .
 
